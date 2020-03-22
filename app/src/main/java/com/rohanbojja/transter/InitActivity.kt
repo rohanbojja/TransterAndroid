@@ -8,6 +8,8 @@ import androidx.appcompat.widget.Toolbar
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import kotlinx.android.synthetic.main.activity_init.*
 
 // Layout can be used as a splash screen
@@ -16,7 +18,7 @@ class InitActivity : AppCompatActivity() {
 
     private val RC_SIGN_IN = 22
 
-    fun handleUserLogin(){
+    private fun handleUserLogin(){
         val auth = FirebaseAuth.getInstance()
         if (auth.currentUser != null) {
             // already signed in
@@ -34,12 +36,29 @@ class InitActivity : AppCompatActivity() {
                     .createSignInIntentBuilder()
                     .setAvailableProviders(providers)
                     .setLogo(R.drawable.ic_logo)
-                    .setTheme(R.style.AppTheme_NoActionBar)
+                    .setTheme(R.style.LoginTheme)
                     .build(),
                 RC_SIGN_IN)
         }
     }
+
+    private fun handleNewUserSignUp(){
+        //Create a Firestore entry
+        val db = Firebase.firestore
+        val auth = FirebaseAuth.getInstance()
+        val user = hashMapOf(
+            "first" to "Your name"
+        )
+        db.collection("users").document(auth.currentUser!!.uid).set(user).addOnSuccessListener {
+            println("User sign-up successful.")
+            val intent  = Intent(this,MainActivity::class.java)
+            startActivity(intent)
+        }
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.AppTheme_NoActionBar)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_init)
         //Check for permissions TODO
@@ -68,8 +87,24 @@ class InitActivity : AppCompatActivity() {
                 // Successfully signed in
                 println("Sign in SUCCESS")
                 val user = FirebaseAuth.getInstance().currentUser
-                val intent  = Intent(this,MainActivity::class.java)
-                startActivity(intent)
+                val db = Firebase.firestore
+                //TODO LOADER
+                db.collection("users").document(user!!.uid).get()
+                    .addOnSuccessListener {
+                        if(it != null)
+                        {
+                            val intent  = Intent(this,MainActivity::class.java)
+                            startActivity(intent)
+                        }
+                        else
+                        {
+                            handleNewUserSignUp()
+                        }
+                    }
+                    .addOnFailureListener {
+                        println("Getting document failed!")
+                    }
+
                 // ...
             } else {
                 println("Sign in failed")

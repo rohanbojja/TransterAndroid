@@ -1,34 +1,67 @@
 package com.rohanbojja.transter
 
 import android.content.Intent
+import android.content.res.Resources
 import android.os.Bundle
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
-import androidx.drawerlayout.widget.DrawerLayout
-import com.google.android.material.navigation.NavigationView
+import android.view.Menu
+import android.view.MenuItem
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import android.view.Menu
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.navigation.ui.AppBarConfiguration
 import com.firebase.ui.auth.AuthUI
+import com.google.android.libraries.maps.CameraUpdateFactory
+import com.google.android.libraries.maps.GoogleMap
+import com.google.android.libraries.maps.OnMapReadyCallback
+import com.google.android.libraries.maps.SupportMapFragment
+import com.google.android.libraries.maps.model.LatLng
+import com.google.android.libraries.maps.model.MapStyleOptions
+import com.google.android.libraries.maps.model.MarkerOptions
+import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+import com.google.android.material.navigation.NavigationView
+import com.google.firebase.auth.FirebaseAuth
 
-class MainActivity : AppCompatActivity() {
+
+class MainActivity : AppCompatActivity(),OnMapReadyCallback{
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     //TODO Secure Maps API key
+
+    override fun onMapReady(p0: GoogleMap?) {
+        val googleMap = p0
+        println("Map is ready.")
+        try {
+            // Customise the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            val success: Boolean = googleMap!!.setMapStyle(
+                MapStyleOptions.loadRawResourceStyle(
+                    this, R.raw.style_json
+                )
+            )
+            if (!success) {
+            }
+        } catch (e: Resources.NotFoundException) {
+        }
+        val sydney = LatLng(-34.0, 151.0)
+        googleMap!!.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
+        googleMap!!.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val user = FirebaseAuth.getInstance().currentUser
+        //Inflate views
+
+
+
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar!!.setDisplayShowTitleEnabled(false)
         supportActionBar!!.setDisplayUseLogoEnabled(true)
         supportActionBar!!.setLogo(R.drawable.ic_logo_small)
-        val fab: FloatingActionButton = findViewById(R.id.fab)
+        val fab: ExtendedFloatingActionButton = findViewById(R.id.fab)
         fab.setOnClickListener { view ->
             AuthUI.getInstance()
                 .signOut(this)
@@ -42,8 +75,25 @@ class MainActivity : AppCompatActivity() {
 //                .setAction("Action", null).show()
         }
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
-        val navView: NavigationView = findViewById(R.id.nav_view)
-        val navController = findNavController(R.id.nav_host_fragment)
+        val toggle = ActionBarDrawerToggle(
+            this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
+        drawerLayout.addDrawerListener(toggle)
+        val navigationView: NavigationView = findViewById(R.id.navigation)
+        navigationView.setNavigationItemSelectedListener {
+            when(it.itemId){
+                R.id.map -> {
+                    println("MAP SELECTED.")
+                    true
+                }
+                R.id.nav_gallery -> {
+                    val intent  = Intent(this,InitActivity::class.java);startActivity(intent)
+                    finish()
+                    true
+                }
+                else -> false
+            }
+        }
+        toggle.syncState()
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(
@@ -52,8 +102,9 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_tools, R.id.nav_share, R.id.nav_send
             ), drawerLayout
         )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
+        val mapFragment: SupportMapFragment? = supportFragmentManager
+            .findFragmentById(R.id.map) as SupportMapFragment?
+        mapFragment!!.getMapAsync(this)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -62,8 +113,5 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment)
-        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
-    }
+
 }
