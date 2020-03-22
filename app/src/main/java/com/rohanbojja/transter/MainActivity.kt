@@ -5,6 +5,9 @@ import android.content.res.Resources
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.Button
+import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
@@ -53,27 +56,13 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback{
         setContentView(R.layout.activity_main)
         val user = FirebaseAuth.getInstance().currentUser
         //Inflate views
-
-
-
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar!!.setDisplayShowTitleEnabled(false)
         supportActionBar!!.setDisplayUseLogoEnabled(true)
         supportActionBar!!.setLogo(R.drawable.ic_logo_small)
         val fab: ExtendedFloatingActionButton = findViewById(R.id.fab)
-        fab.setOnClickListener { view ->
-            AuthUI.getInstance()
-                .signOut(this)
-                .addOnCompleteListener {
-                    println("Signed out.")
-                    val intent  = Intent(this,InitActivity::class.java)
-                    startActivity(intent)
-                    finish()
-                }
-//            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                .setAction("Action", null).show()
-        }
+
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val toggle = ActionBarDrawerToggle(
             this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
@@ -90,21 +79,70 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback{
                     finish()
                     true
                 }
+                R.id.logout -> {
+                    AuthUI.getInstance()
+                        .signOut(this)
+                        .addOnCompleteListener {
+                            println("Signed out.")
+                            val intent  = Intent(this,InitActivity::class.java)
+                            startActivity(intent)
+                            finish()
+                        }
+                    true
+                }
                 else -> false
             }
         }
         toggle.syncState()
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
-        appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.map, R.id.nav_gallery, R.id.nav_slideshow,
-                R.id.nav_tools, R.id.nav_share, R.id.nav_send
-            ), drawerLayout
-        )
         val mapFragment: SupportMapFragment? = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment?
         mapFragment!!.getMapAsync(this)
+
+        //Setup navigation pane
+        val navigationHeader = navigationView.getHeaderView(0)
+        val nameHeader = navigationHeader.findViewById<TextView>(R.id.textView2)
+        val emailHeader = navigationHeader.findViewById<TextView>(R.id.textView)
+        val phoneHeader = navigationHeader.findViewById<TextView>(R.id.textView3)
+        val setupSocialButton = navigationHeader.findViewById<Button>(R.id.setupSocial)
+        setupSocialButton.visibility = View.GONE
+        setupSocialButton.setOnClickListener {
+            val intent  = Intent(this,SocialSetup::class.java)
+            startActivity(intent)
+            finish()
+        }
+        nameHeader.text = user!!.uid
+        if(user.email == null)
+        {
+            setupSocialButton.visibility = View.VISIBLE
+            emailHeader.visibility = View.GONE
+        }
+        else{
+            emailHeader.text = user.email
+        }
+
+        if(user.displayName == null){
+            setupSocialButton.visibility = View.VISIBLE
+            nameHeader.visibility = View.GONE
+        }
+        else{
+            nameHeader.text = user.displayName
+        }
+        if(user.phoneNumber == null){
+            setupSocialButton.visibility = View.VISIBLE
+            phoneHeader.visibility = View.GONE
+        }
+        else{
+            phoneHeader.text = user.phoneNumber
+        }
+
+
+        //On click listener for FAB
+        fab.setOnClickListener { view ->
+
+        }
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
