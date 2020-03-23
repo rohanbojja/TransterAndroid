@@ -6,6 +6,9 @@
         <item name="colorPrimary">@color/primaryColor</item>
         <item name="colorPrimaryDark">@color/primaryDarkColor</item>
         <item name="colorAccent">@color/secondaryColor</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
     <style name="AppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
@@ -16,6 +19,9 @@
         <item name="android:textColor">@color/secondaryColor</item>
     </style>
     <style name="LoginTheme" parent="FirebaseUI">
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="colorPrimary">@color/primaryColor</item>
         <item name="android:textColorTertiary">@color/secondaryLightColor</item>
         <item name="colorPrimaryDark">@color/primaryDarkColor</item>
