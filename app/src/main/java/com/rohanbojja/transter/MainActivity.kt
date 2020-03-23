@@ -3,17 +3,16 @@ package com.rohanbojja.transter
 import android.content.Intent
 import android.content.res.Resources
 import android.os.Bundle
+import android.view.Gravity
 import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
-import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.ui.AppBarConfiguration
 import com.firebase.ui.auth.AuthUI
+import com.google.android.apps.gmm.map.util.jni.NativeHelper.context
 import com.google.android.libraries.maps.CameraUpdateFactory
 import com.google.android.libraries.maps.GoogleMap
 import com.google.android.libraries.maps.OnMapReadyCallback
@@ -24,13 +23,21 @@ import com.google.android.libraries.maps.model.MarkerOptions
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
+import com.wangjie.rapidfloatingactionbutton.RapidFloatingActionButton
+import com.wangjie.rapidfloatingactionbutton.RapidFloatingActionHelper
+import com.wangjie.rapidfloatingactionbutton.RapidFloatingActionLayout
+import com.wangjie.rapidfloatingactionbutton.contentimpl.labellist.RFACLabelItem
+import com.wangjie.rapidfloatingactionbutton.contentimpl.labellist.RapidFloatingActionContentLabelList
+import kotlinx.android.synthetic.main.activity_main.*
 
 
-class MainActivity : AppCompatActivity(),OnMapReadyCallback{
+class MainActivity : AppCompatActivity(),OnMapReadyCallback, RapidFloatingActionContentLabelList.OnRapidFloatingActionContentLabelListListener<Any>{
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     //TODO Secure Maps API key
-
+    private lateinit var rfaBtn: RapidFloatingActionButton
+    private lateinit var rfaLayout: RapidFloatingActionLayout
+    private lateinit var rfabHelper: RapidFloatingActionHelper
     override fun onMapReady(p0: GoogleMap?) {
         val googleMap = p0
         println("Map is ready.")
@@ -51,22 +58,81 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback{
         googleMap!!.moveCamera(CameraUpdateFactory.newLatLng(sydney))
     }
 
+    override fun onRFACItemIconClick(position: Int, item: RFACLabelItem<Any>?) {
+        println("${position} ${item.toString()}")
+        rfabHelper.toggleContent();
+    }
+
+    override fun onRFACItemLabelClick(position: Int, item: RFACLabelItem<Any>?) {
+        println("${position} ${item.toString()}")
+        rfabHelper.toggleContent()
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.AppTheme_NoActionBar)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        //Fill the expanding FAB
+        rfaLayout = findViewById<RapidFloatingActionLayout>(R.id.activity_main_rfal)
+        rfaBtn = findViewById<RapidFloatingActionButton>(R.id.activity_main_rfab)
+        val rfaContent = RapidFloatingActionContentLabelList(this)
+        rfaContent.setOnRapidFloatingActionContentLabelListListener(this)
+        val items = mutableListOf<RFACLabelItem<Int>>(
+            RFACLabelItem<Int>()
+                .setLabel("Mechanic")
+                .setResId(R.drawable.ic_mech)
+                .setIconNormalColor(-0x27bceb)
+                .setIconPressedColor(-0x40c9f4)
+                .setWrapper(0),
+
+            RFACLabelItem<Int>()
+                .setLabel("Flat tyre")
+                .setResId(R.drawable.ic_trip_origin)
+                .setIconNormalColor(-0x27bceb)
+                .setIconPressedColor(-0x40c9f4)
+                .setWrapper(0),
+
+            RFACLabelItem<Int>()
+                .setLabel("Fuel")
+                .setResId(R.drawable.ic_local_gas_station)
+                .setIconNormalColor(-0x27bceb)
+                .setIconPressedColor(-0x40c9f4)
+                .setWrapper(0),
+
+            RFACLabelItem<Int>()
+                .setLabel("Key")
+                .setResId(R.drawable.ic_key)
+                .setIconNormalColor(-0x27bceb)
+                .setIconPressedColor(-0x40c9f4)
+                .setWrapper(0),
+
+            RFACLabelItem<Int>()
+                .setLabel("Car wash")
+                .setResId(R.drawable.ic_local_car_wash)
+                .setIconNormalColor(-0x27bceb)
+                .setIconPressedColor(-0x40c9f4)
+                .setWrapper(0),
+
+            RFACLabelItem<Int>()
+                .setLabel("Towing")
+                .setResId(R.drawable.ic_local_shipping)
+                .setIconNormalColor(-0x27bceb)
+                .setIconPressedColor(-0x40c9f4)
+                .setWrapper(0)
+        ) as List<RFACLabelItem<Int>>
+        rfaContent
+            .setItems(items)
+            .setIconShadowColor(-0x777778)
+        rfabHelper = RapidFloatingActionHelper(
+            context,
+            rfaLayout,
+            rfaBtn,
+            rfaContent
+        ).build()
+
+
         val user = FirebaseAuth.getInstance().currentUser
-        //Inflate views
-        val toolbar: Toolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar!!.setDisplayShowTitleEnabled(false)
-        supportActionBar!!.setDisplayUseLogoEnabled(true)
-        supportActionBar!!.setLogo(R.drawable.ic_logo_small)
-        val fab: ExtendedFloatingActionButton = findViewById(R.id.fab)
 
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
-        val toggle = ActionBarDrawerToggle(
-            this, drawerLayout, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
-        drawerLayout.addDrawerListener(toggle)
         val navigationView: NavigationView = findViewById(R.id.navigation)
         navigationView.setNavigationItemSelectedListener {
             when(it.itemId){
@@ -74,7 +140,7 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback{
                     println("MAP SELECTED.")
                     true
                 }
-                R.id.nav_gallery -> {
+                R.id.edit_profile -> {
                     val intent  = Intent(this,InitActivity::class.java);startActivity(intent)
                     finish()
                     true
@@ -93,7 +159,6 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback{
                 else -> false
             }
         }
-        toggle.syncState()
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         val mapFragment: SupportMapFragment? = supportFragmentManager
@@ -137,10 +202,9 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback{
             phoneHeader.text = user.phoneNumber
         }
 
-
-        //On click listener for FAB
-        fab.setOnClickListener { view ->
-
+        //On-click listener for FAB hamburger
+        fabHamburger.setOnClickListener {
+            drawerLayout.openDrawer(Gravity.LEFT)
         }
 
     }
@@ -150,6 +214,4 @@ class MainActivity : AppCompatActivity(),OnMapReadyCallback{
         menuInflater.inflate(R.menu.main, menu)
         return true
     }
-
-
 }
